@@ -4,8 +4,18 @@
 // https://github.com/spirex64
 
 interface IMatcher<Context extends object, Cases extends string = never> {
-    otherwise<Case extends string>(caseKey: Case): IMatcher<Context, Cases | Case>;
-    resolve(): Cases extends never ? undefined : Cases
+    matchCase<Case extends string>(
+        condition: boolean,
+        caseKey: Case,
+    ): IMatcher<Context, Cases | Case>;
+
+    otherwise<Case extends string>(
+        caseKey: Case,
+    ): IMatcher<Context, Cases | Case>;
+
+    resolve(): Cases extends never ? undefined : Cases;
 }
 
-declare function matcher<Context extends object>(context?: Context): IMatcher<Context>;
+declare function matcher<Context extends object>(
+    context?: Context,
+): IMatcher<Context>;

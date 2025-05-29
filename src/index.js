@@ -7,10 +7,16 @@ export function matcher(context) {
     var matchedCase = undefined;
 
     return {
-        otherwise(caseKey) {
-            matchedCase = caseKey;
+        matchCase(condition, caseKey) {
+            if (condition) matchedCase = caseKey;
             return this;
         },
+
+        otherwise(caseKey) {
+            matchedCase ||= caseKey;
+            return this;
+        },
+
         resolve() {
             return matchedCase;
         },

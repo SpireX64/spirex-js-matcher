@@ -24,19 +24,29 @@ describe("Matcher", () => {
         });
     });
 
-    describe("Matching", () => {
-        describe("Otherwise", () => {
-            test("WHEN: empty matcher", () => {
-                // Arrange -----
-                var m = matcher();
+    describe("Chaining", () => {
+        test("WHEN: Chain match case with boolean argument", () => {
+            // Arrange ------
+            var m = matcher()
 
-                // Act ---------
-                var result = m.otherwise("key");
+            // Act ----------
+            var result = m.matchCase(true, 'key')
 
-                // Assert ------
-                // Returns the same matcher for chaining
-                expect(result).toBe(m);
-            });
+            // Assert -------
+            // Returns the same matcher for chaining
+            expect(result).toBe(m);
+        })
+
+        test("WHEN: Chain otherwise", () => {
+            // Arrange -----
+            var m = matcher();
+
+            // Act ---------
+            var result = m.otherwise("key");
+
+            // Assert ------
+            // Returns the same matcher for chaining
+            expect(result).toBe(m);
         });
     });
 
@@ -64,5 +74,20 @@ describe("Matcher", () => {
             // Returns case-key passed to otherwise branch
             expect(result).toBe(expectedCase);
         });
+
+        describe("Match case", () => {
+            test.each([true, false])("WHEN: pass boolean (%s)", (condition) => {
+                // Arrange --------
+                var m = matcher()
+                    .matchCase(condition, 'trueCase')
+                    .otherwise('falseCase')
+
+                // Act ------------
+                var result = m.resolve();
+
+                // Assert ---------
+                expect(result).toBe(condition ? "trueCase" : "falseCase");
+            })
+        })
     });
 });
