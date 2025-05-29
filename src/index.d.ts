@@ -6,11 +6,11 @@
 interface IMatcher<Context extends object, Cases extends string = never> {
     matchCase<Case extends string>(
         condition: boolean,
-        caseKey: Case,
+        resultCase: Case,
     ): IMatcher<Context, Cases | Case>;
 
     otherwise<Case extends string>(
-        caseKey: Case,
+        resultCase: Case,
     ): IMatcher<Context, Cases | Case>;
 
     resolve(): Cases extends never ? undefined : Cases;

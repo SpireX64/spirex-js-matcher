@@ -7,13 +7,13 @@ export function matcher(context) {
     var matchedCase = undefined;
 
     return {
-        matchCase(condition, caseKey) {
-            if (condition) matchedCase = caseKey;
+        matchCase(condition, resultCase) {
+            if (condition) matchedCase = resultCase;
             return this;
         },
 
-        otherwise(caseKey) {
-            matchedCase ||= caseKey;
+        otherwise(resultCase) {
+            matchedCase ||= resultCase;
             return this;
         },
 
