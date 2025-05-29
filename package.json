@@ -1,0 +1,9 @@
+{
+  "name": "@spirex/matcher",
+  "description": "Simple pattern matcher",
+  "version": "0.0.1",
+  "license": "MIT",
+  "private": false,
+  "author": "Artem Sobolenkov",
+  "main": "index.js"
+}
