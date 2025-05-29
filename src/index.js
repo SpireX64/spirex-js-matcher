@@ -4,7 +4,15 @@
 // https://github.com/spirex64
 
 export function matcher(context) {
+    var matchedCase = undefined;
+
     return {
-        resolve() {}
-    }
+        otherwise(caseKey) {
+            matchedCase = caseKey;
+            return this;
+        },
+        resolve() {
+            return matchedCase;
+        },
+    };
 }
