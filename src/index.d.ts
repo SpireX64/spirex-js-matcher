@@ -3,11 +3,19 @@
 // MIT License
 // https://github.com/spirex64
 
-type TMatcherPredicate<Context extends object> = (context: Context) => boolean;
+export type TMatcherPredicate<Context extends object> = (
+    context: Context,
+) => boolean;
 
-type TContextMerge<A extends object, B extends object | null = null> = B extends null ? A : Omit<A, keyof B> & B
+export type TContextMerge<
+    A extends object,
+    B extends object | null = null,
+> = B extends null ? A : Omit<A, keyof B> & B;
 
-interface IMatcher<Context extends object, Cases extends string = undefined> {
+export interface IMatcher<
+    Context extends object,
+    Cases extends string = undefined,
+> {
     withContext<ContextExt extends object | null>(
         ext: ContextExt,
     ): IMatcher<TContextMerge<Context, ContextExt>, Cases>;
@@ -34,6 +42,6 @@ interface IMatcher<Context extends object, Cases extends string = undefined> {
     resolve(): Cases;
 }
 
-declare function matcher<Context extends object = {}>(
+export function matcher<Context extends object = {}>(
     context?: Context,
 ): IMatcher<Context>;
