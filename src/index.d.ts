@@ -42,6 +42,8 @@ export interface IMatcher<
     resolve(): Cases;
 
     resolve<Result>(resultMap: Record<Cases, Result>): Result;
+
+    resolve<Result>(resultMap: Partial<Record<Cases, Result>>, fallback: Result): Result;
 }
 
 export function matcher<Context extends object = {}>(

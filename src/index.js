@@ -50,8 +50,8 @@ export function matcher(context) {
             return this;
         },
 
-        resolve(resultMap) {
-            return resultMap ? resultMap[matchedCase] : matchedCase;
+        resolve(resultMap, fallback) {
+            return resultMap ? (resultMap[matchedCase] || fallback) : matchedCase;
         },
     };
 }

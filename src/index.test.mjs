@@ -277,6 +277,20 @@ describe("Matcher", () => {
                 // Assert -----
                 expect(result).toBe(2);
             });
+
+            test("WHEN: map case with fallback result", () => {
+                // Arrange --------
+                var m = matcher({ foo: falseCase })
+                    .matchCase({ foo: "qwe" }, "A")
+                    .matchCase({ foo: "bar" }, "B")
+                    .otherwise(falseCase);
+
+                // Act -------------
+                var result = m.resolve({ A: 1, B: 2}, 0);
+
+                // Arrange ---------
+                expect(result).toBe(0);
+            })
         });
     });
 });
