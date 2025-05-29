@@ -1,6 +1,9 @@
 import { vi, describe, test, expect } from "vitest";
 import { matcher } from "./index";
 
+var trueCase = "trueCase";
+var falseCase = "falseCase";
+
 describe("Matcher", () => {
     describe("Create matcher", () => {
         test("WHEN: empty matcher", () => {
@@ -74,6 +77,58 @@ describe("Matcher", () => {
         });
     });
 
+    describe("Context mutation", () => {
+        test('WHEN: extend context with null', () => {
+            // Arrange ------
+            var originContext = { foo: 11 };
+            var m = matcher(originContext)
+                .withContext(null)
+                .matchCase(ctx => ctx.foo === originContext.foo, trueCase)
+                .otherwise(falseCase);
+
+            // Act ----------
+            var result = m.resolve()
+
+            // Assert -------
+            // Context was not erased
+            expect(result).toBe(trueCase);
+        })
+
+        test('WHEN: extend context with new property', () => {
+            // Arrange ------
+            var originContext = { foo: 11 };
+            var extContext = { bar: 22 };
+
+            var m = matcher(originContext)
+                .withContext(extContext)
+                .matchCase({ foo: 11, bar: 22 }, trueCase)
+                .otherwise(falseCase);
+
+            // Act ----------
+            var result = m.resolve()
+
+            // Assert -------
+            expect(result).toBe(trueCase);
+        })
+
+        test('WHEN: mutate value in context', () => {
+            // Arrange -------
+            var originContext = { foo: 'bar' };
+            var extContext = { foo: 'qwe' };
+
+            var m = matcher(originContext)
+                .withContext(extContext)
+                .matchCase({ foo: 'qwe' }, trueCase)
+                .otherwise(falseCase);
+
+            // Act -----------
+            var result = m.resolve()
+
+            // Assert --------
+            expect(result).toBe(trueCase);
+        })
+    })
+
     describe("Resolve", () => {
         test("WHEN: empty matcher", () => {
             // Arrange --------
@@ -100,9 +155,6 @@ describe("Matcher", () => {
         });
 
         describe("Match case", () => {
-            var trueCase = "trueCase";
-            var falseCase = "falseCase";
-
             describe("Boolean matching", () => {
                 test.each([true, false])(
                     "WHEN: pass boolean (%s)",

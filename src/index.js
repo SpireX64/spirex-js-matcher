@@ -5,6 +5,7 @@
 
 export function matcher(context) {
     var matchedCase = undefined;
+    var currentContext = context;
 
     function matchCasePattern(pattern, resultCase) {
         // Null-pattern is always unmatched
@@ -14,9 +15,9 @@ export function matcher(context) {
         // Empty pattern is always matched
         if (patternKeys.length > 0) {
             var isMatchPattern =
-                context &&
+                currentContext &&
                 patternKeys.every((key) =>
-                    Object.is(context[key], pattern[key]),
+                    Object.is(currentContext[key], pattern[key]),
                 );
             // Context must match given pattern
             if (!isMatchPattern) return;
@@ -25,12 +26,17 @@ export function matcher(context) {
     }
 
     return {
+        withContext(ext) {
+            if (ext) currentContext = { ...currentContext, ...ext };
+            return this;
+        },
+
         matchCase(input, resultCase) {
             var inputType = typeof input;
 
             if (
                 (inputType === "boolean" && input) ||
-                (inputType === "function" && input(context))
+                (inputType === "function" && input(currentContext))
             )
                 matchedCase = resultCase;
             else if (inputType === "object")
