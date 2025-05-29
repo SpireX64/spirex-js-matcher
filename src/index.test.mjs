@@ -23,4 +23,17 @@ describe("@spirex/matcher", () => {
             expect(m).not.toBe(ctx);
         })
     });
+
+    describe("Resolve", () => {
+        test("WHEN: empty matcher", () => {
+            // Arrange --------
+            var m = matcher();
+
+            // Act ------------
+            var result = m.resolve();
+
+            // Assert ---------
+            expect(result).toBeUndefined();
+        })
+    })
 });

@@ -3,4 +3,8 @@
 // MIT License
 // https://github.com/spirex64
 
-declare function matcher<Context extends object>(context?: Context): object;
+interface IMatcher<Context extends object> {
+    resolve(): unknown
+}
+
+declare function matcher<Context extends object>(context?: Context): IMatcher<Context>;

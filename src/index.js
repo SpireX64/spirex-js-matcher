@@ -4,5 +4,7 @@
 // https://github.com/spirex64
 
 export function matcher(context) {
-    return {}
+    return {
+        resolve() {}
+    }
 }
