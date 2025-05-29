@@ -6,6 +6,10 @@
   "private": false,
   "author": "Artem Sobolenkov",
   "main": "index.js",
+  "scripts": {
+    "test": "vitest run --config ./vitest.config.mjs",
+    "test:c": "vitest run --config ./vitest.config.mjs --coverage"
+  },
   "devDependencies": {
     "rollup": "4.41.1",
     "rollup-plugin-copy": "3.5.0",
