@@ -64,6 +64,18 @@ describe("Matcher", () => {
             expect(result).toBe(m);
         });
 
+        test("WHEN: Chain with selector", () => {
+            // Arrange -------
+            var m = matcher();
+
+            // Act --------
+            var result = m.selectCase(() => "key");
+
+            // Assert -----
+            // Returns the same matcher for chaining
+            expect(result).toBe(m);
+        });
+
         test("WHEN: Chain otherwise", () => {
             // Arrange -----
             var m = matcher();
@@ -263,6 +275,32 @@ describe("Matcher", () => {
             });
         });
 
+        describe("Select case", () => {
+            test("WHEN: Take case from identity", () => {
+                // Arrange ------
+                var m = matcher().selectCase(() => "case");
+
+                // Act ----------
+                var result = m.resolve();
+
+                // Assert -------
+                expect(result).toBe("case");
+            });
+
+            test("WHEN: Take case from context value", () => {
+                // Arrange -------
+                var m = matcher({ caseKey: "bar" }).selectCase(
+                    (c) => c.caseKey,
+                );
+
+                // Act -----------
+                var result = m.resolve();
+
+                // Assert --------
+                expect(result).toBe("bar");
+            });
+        });
+
         describe("Result case-mapping", () => {
             test("WHEN: map case result", () => {
                 // Arrange --------
@@ -286,11 +324,11 @@ describe("Matcher", () => {
                     .otherwise(falseCase);
 
                 // Act -------------
-                var result = m.resolve({ A: 1, B: 2}, 0);
+                var result = m.resolve({ A: 1, B: 2 }, 0);
 
                 // Arrange ---------
                 expect(result).toBe(0);
-            })
+            });
         });
     });
 });

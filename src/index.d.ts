@@ -8,6 +8,10 @@ export type TMatcherPredicate<Context extends object> = (
     context: Context,
 ) => boolean;
 
+export type TMatcherSelector<Context extends object, T> = (
+    context: Context,
+) => T;
+
 /** Utility type for merging two context objects */
 export type TContextMerge<
     A extends object,
@@ -68,6 +72,10 @@ export interface IMatcher<
         resultCase: Case,
     ): IMatcher<Context, Cases | Case>;
 
+    selectCase<Case extends string>(
+        selector: TMatcherSelector<Context, Case>,
+    ): IMatcher<Context, Cases | Case>;
+
     /**
      * Defines the fallback case if no other cases match.
      *
@@ -98,7 +106,10 @@ export interface IMatcher<
      * @param resultMap An object with optional mappings for some case keys.
      * @param fallback The fallback result if the matched case is not in the map.
      */
-    resolve<Result>(resultMap: Partial<Record<Cases, Result>>, fallback: Result): Result;
+    resolve<Result>(
+        resultMap: Partial<Record<Cases, Result>>,
+        fallback: Result,
+    ): Result;
 }
 
 /**

@@ -45,6 +45,11 @@ export function matcher(context) {
             return this;
         },
 
+        selectCase(selector) {
+            matchedCase = selector(currentContext);
+            return this
+        },
+
         otherwise(resultCase) {
             matchedCase ||= resultCase;
             return this;
