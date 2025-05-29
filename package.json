@@ -5,10 +5,22 @@
   "license": "MIT",
   "private": false,
   "author": "Artem Sobolenkov",
-  "main": "index.js",
+  "main": "./build/index.cjs",
+  "module": "./build/index.mjs",
+  "types": "./build/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "require": "./build/index.cjs",
+      "import": "./build/index.mjs",
+      "default": "./build/index.js"
+    }
+  },
   "scripts": {
     "test": "vitest run --config ./vitest.config.mjs",
-    "test:c": "vitest run --config ./vitest.config.mjs --coverage"
+    "test:c": "vitest run --config ./vitest.config.mjs --coverage",
+    "build": "rollup --config --environment NODE_ENV:development",
+    "build:release": "rollup --config --environment NODE_ENV:production"
   },
   "devDependencies": {
     "rollup": "4.41.1",
