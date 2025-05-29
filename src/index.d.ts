@@ -9,6 +9,11 @@ interface IMatcher<Context extends object, Cases extends string = never> {
         resultCase: Case,
     ): IMatcher<Context, Cases | Case>;
 
+    matchCase<Case extends string>(
+        pattern: Partial<Context>,
+        resultCase: Case,
+    ): IMatcher<Context, Cases | Case>;
+
     otherwise<Case extends string>(
         resultCase: Case,
     ): IMatcher<Context, Cases | Case>;
