@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { vi, describe, test, expect } from "vitest";
 import { matcher } from "./index";
 
 describe("Matcher", () => {
@@ -31,6 +31,18 @@ describe("Matcher", () => {
 
             // Act ----------
             var result = m.matchCase(true, "key");
+
+            // Assert -------
+            // Returns the same matcher for chaining
+            expect(result).toBe(m);
+        });
+
+        test("WHEN: Chain with predicate function", () => {
+            // Arrange ------
+            var m = matcher();
+
+            // Act ----------
+            var result = m.matchCase(() => true, "key");
 
             // Assert -------
             // Returns the same matcher for chaining
@@ -105,6 +117,30 @@ describe("Matcher", () => {
 
                         // Assert ---------
                         expect(result).toBe(condition ? trueCase : falseCase);
+                    },
+                );
+            });
+
+            describe("Predicate", () => {
+                test.each([
+                    [true, trueCase],
+                    [false, falseCase],
+                ])(
+                    "WHEN: predicate returns %s",
+                    (predicateResult, expectedCase) => {
+                        // Arrange ---------
+                        var context = { foo: 42 };
+                        var predicate = vi.fn(() => predicateResult);
+                        var m = matcher()
+                            .matchCase(predicate, trueCase)
+                            .otherwise(falseCase);
+
+                        // Act -------------
+                        var result = m.resolve();
+
+                        // Assert ----------
+                        expect(result).toBe(expectedCase);
+                        expect(predicate).toHaveBeenCalled(context);
                     },
                 );
             });

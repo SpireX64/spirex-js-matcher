@@ -3,6 +3,8 @@
 // MIT License
 // https://github.com/spirex64
 
+type TMatcherPredicate<Context extends object> = (context: Context) => boolean;
+
 interface IMatcher<Context extends object, Cases extends string = never> {
     matchCase<Case extends string>(
         condition: boolean,
@@ -11,6 +13,11 @@ interface IMatcher<Context extends object, Cases extends string = never> {
 
     matchCase<Case extends string>(
         pattern: Partial<Context>,
+        resultCase: Case,
+    ): IMatcher<Context, Cases | Case>;
+
+    matchCase<Case extends string>(
+        predicate: TMatcherPredicate<Context>,
         resultCase: Case,
     ): IMatcher<Context, Cases | Case>;
 

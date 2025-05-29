@@ -28,7 +28,11 @@ export function matcher(context) {
         matchCase(input, resultCase) {
             var inputType = typeof input;
 
-            if (inputType === "boolean" && input) matchedCase = resultCase;
+            if (
+                (inputType === "boolean" && input) ||
+                (inputType === "function" && input(context))
+            )
+                matchedCase = resultCase;
             else if (inputType === "object")
                 matchCasePattern(input, resultCase);
 
