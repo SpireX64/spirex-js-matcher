@@ -278,13 +278,28 @@ describe("Matcher", () => {
         describe("Select case", () => {
             test("WHEN: Take case from identity", () => {
                 // Arrange ------
-                var m = matcher().selectCase(() => "case");
+                var m = matcher()
+                    .selectCase(() => trueCase)
+                    .otherwise(falseCase);
 
                 // Act ----------
                 var result = m.resolve();
 
                 // Assert -------
-                expect(result).toBe("case");
+                expect(result).toBe(trueCase);
+            });
+
+            test("WHEN Take undefined case from identity", () => {
+                // Arrange ------
+                var m = matcher()
+                    .selectCase(() => undefined)
+                    .otherwise(falseCase);
+
+                // Act ----------
+                var result = m.resolve();
+
+                // Assert -------
+                expect(result).toBe(falseCase);
             });
 
             test("WHEN: Take case from context value", () => {
@@ -298,6 +313,36 @@ describe("Matcher", () => {
 
                 // Assert --------
                 expect(result).toBe("bar");
+            });
+
+            test("WHEN: Take case by case mapping", () => {
+                // Arrange ------
+                var m = matcher({ key: "bar" }).selectCase((c) => c.key, {
+                    foo: "case1",
+                    bar: "case2",
+                    qwe: "case3",
+                });
+
+                // Act ----------
+                var result = m.resolve();
+
+                // Assert -------
+                expect(result).toBe("case2");
+            });
+
+            test("WHEN: Take case by case mapping fallback", () => {
+                var m = matcher({ key: "qwe" })
+                    .selectCase((c) => c.key, {
+                        foo: "case1",
+                        bar: "case2",
+                    })
+                    .otherwise("case3");
+
+                // Act ----------
+                var result = m.resolve();
+
+                // Assert -------
+                expect(result).toBe("case3");
             });
         });
 

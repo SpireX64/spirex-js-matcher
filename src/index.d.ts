@@ -76,6 +76,11 @@ export interface IMatcher<
         selector: TMatcherSelector<Context, Case>,
     ): IMatcher<Context, Cases | Case>;
 
+    selectCase<Case extends string, T extends string & {}>(
+        selector: TMatcherSelector<Context, T>,
+        caseMap: Record<T, Case>,
+    ): IMatcher<Context, Cases | Case>;
+
     /**
      * Defines the fallback case if no other cases match.
      *

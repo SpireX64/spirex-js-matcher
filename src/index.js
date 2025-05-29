@@ -45,9 +45,17 @@ export function matcher(context) {
             return this;
         },
 
-        selectCase(selector) {
-            matchedCase = selector(currentContext);
-            return this
+        selectCase(selector, caseMap) {
+            var caseKey = selector(currentContext);
+            if (caseKey) {
+                if (caseMap) {
+                    caseKey = caseMap[caseKey];
+                    if (caseKey) matchedCase = caseKey;
+                } else {
+                    matchedCase = caseKey;
+                }
+            }
+            return this;
         },
 
         otherwise(resultCase) {
@@ -56,7 +64,7 @@ export function matcher(context) {
         },
 
         resolve(resultMap, fallback) {
-            return resultMap ? (resultMap[matchedCase] || fallback) : matchedCase;
+            return resultMap ? resultMap[matchedCase] || fallback : matchedCase;
         },
     };
 }
