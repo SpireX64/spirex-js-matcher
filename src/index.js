@@ -3,6 +3,6 @@
 // MIT License
 // https://github.com/spirex64
 
-export function matcher() {
+export function matcher(context) {
     return {}
 }

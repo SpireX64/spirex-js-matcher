@@ -3,4 +3,4 @@
 // MIT License
 // https://github.com/spirex64
 
-declare function matcher(): object;
+declare function matcher<Context extends object>(context?: Context): object;
