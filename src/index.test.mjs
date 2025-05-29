@@ -78,23 +78,23 @@ describe("Matcher", () => {
     });
 
     describe("Context mutation", () => {
-        test('WHEN: extend context with null', () => {
+        test("WHEN: extend context with null", () => {
             // Arrange ------
             var originContext = { foo: 11 };
             var m = matcher(originContext)
                 .withContext(null)
-                .matchCase(ctx => ctx.foo === originContext.foo, trueCase)
+                .matchCase((ctx) => ctx.foo === originContext.foo, trueCase)
                 .otherwise(falseCase);
 
             // Act ----------
-            var result = m.resolve()
+            var result = m.resolve();
 
             // Assert -------
             // Context was not erased
             expect(result).toBe(trueCase);
-        })
+        });
 
-        test('WHEN: extend context with new property', () => {
+        test("WHEN: extend context with new property", () => {
             // Arrange ------
             var originContext = { foo: 11 };
             var extContext = { bar: 22 };
@@ -105,29 +105,29 @@ describe("Matcher", () => {
                 .otherwise(falseCase);
 
             // Act ----------
-            var result = m.resolve()
+            var result = m.resolve();
 
             // Assert -------
             expect(result).toBe(trueCase);
-        })
+        });
 
-        test('WHEN: mutate value in context', () => {
+        test("WHEN: mutate value in context", () => {
             // Arrange -------
-            var originContext = { foo: 'bar' };
-            var extContext = { foo: 'qwe' };
+            var originContext = { foo: "bar" };
+            var extContext = { foo: "qwe" };
 
             var m = matcher(originContext)
                 .withContext(extContext)
-                .matchCase({ foo: 'qwe' }, trueCase)
+                .matchCase({ foo: "qwe" }, trueCase)
                 .otherwise(falseCase);
 
             // Act -----------
-            var result = m.resolve()
+            var result = m.resolve();
 
             // Assert --------
             expect(result).toBe(trueCase);
-        })
-    })
+        });
+    });
 
     describe("Resolve", () => {
         test("WHEN: empty matcher", () => {
@@ -260,6 +260,22 @@ describe("Matcher", () => {
                     // Assert -----------
                     expect(result).toBe(falseCase);
                 });
+            });
+        });
+
+        describe("Result case-mapping", () => {
+            test("WHEN: map case result", () => {
+                // Arrange --------
+                var m = matcher({ foo: "bar" })
+                    .matchCase({ foo: "qwe" }, "A")
+                    .matchCase({ foo: "bar" }, "B")
+                    .otherwise("C");
+
+                // Act -------
+                var result = m.resolve({ A: 1, B: 2, C: 3 });
+
+                // Assert -----
+                expect(result).toBe(2);
             });
         });
     });

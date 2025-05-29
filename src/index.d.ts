@@ -40,6 +40,8 @@ export interface IMatcher<
     ): IMatcher<Context, Cases | Case>;
 
     resolve(): Cases;
+
+    resolve<Result>(resultMap: Record<Cases, Result>): Result;
 }
 
 export function matcher<Context extends object = {}>(
