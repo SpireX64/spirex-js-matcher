@@ -140,6 +140,7 @@ describe("Matcher", () => {
         });
 
         describe("forwarding", () => {
+            test("WHEN: Forward matching flow", () => {
             // Arrange -----------
             var m = matcher({ value: 42 })
                 .forward((branch) => branch.matchCase({ value: 42 }, trueCase))
@@ -150,6 +151,21 @@ describe("Matcher", () => {
 
             // Assert ------------
             expect(result).toBe(trueCase);
+            })
+
+            test("WHEN: Case matched", () => {
+                // Arrange -----
+                var m = matcher({ value: 42 })
+                    .matchCase({ value: 42 }, 'case1')
+                    .forward(branch => branch.otherwise('case2'))
+                    .otherwise('case3')
+
+                // Act --------
+                var result = m.resolve();
+
+                // Assert ----
+                expect(result).toBe('case1');
+            })
         });
     });
 
