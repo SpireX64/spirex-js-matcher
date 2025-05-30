@@ -50,6 +50,48 @@ export type TContextMerge<
     B extends object | null = null,
 > = B extends null ? A : Omit<A, keyof B> & B;
 
+export interface IMatcherBranch<Context extends object, Cases extends string> {
+    withContext<ContextExt extends object | null>(
+        ext: ContextExt,
+    ): IMatcherBranch<TContextMerge<Context, ContextExt>, Cases>;
+
+    matchCase<Case extends string>(
+        condition: boolean,
+        resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
+    ): IMatcherBranch<Context, Cases | Case>;
+
+    matchCase<Case extends string>(
+        pattern: TMatcherContextPattern<Context>,
+        resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
+    ): IMatcherBranch<Context, Cases | Case>;
+
+    matchCase<Case extends string>(
+        predicate: TMatcherPredicate<Context>,
+        resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
+    ): IMatcherBranch<Context, Cases | Case>;
+
+    selectCase<Case extends string>(
+        selector: TMatcherSelector<Context, Case>,
+    ): IMatcherBranch<Context, Cases | Case>;
+
+    selectCase<Case extends string, T extends string & {}>(
+        selector: TMatcherSelector<Context, T>,
+        caseMap: Record<T, Case | TMatcherBranchDelegate<Context, Cases, Case>>,
+    ): IMatcherBranch<Context, Cases | Case>;
+
+    otherwise<Case extends string>(
+        resultCase: Case,
+    ): IMatcherBranch<Context, Cases | Case>;
+}
+
+export type TMatcherBranchDelegate<
+    Context extends object,
+    Cases extends string,
+    BranchCases extends string,
+> = (
+    branch: IMatcherBranch<Context, Cases>,
+) => IMatcherBranch<Context, BranchCases>;
+
 /**
  * Matcher interface for building conditional case logic based on context.
  *
@@ -78,7 +120,7 @@ export interface IMatcher<
      */
     matchCase<Case extends string>(
         condition: boolean,
-        resultCase: Case,
+        resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
     ): IMatcher<Context, Cases | Case>;
 
     /**
@@ -90,7 +132,7 @@ export interface IMatcher<
      */
     matchCase<Case extends string>(
         pattern: TMatcherContextPattern<Context>,
-        resultCase: Case,
+        resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
     ): IMatcher<Context, Cases | Case>;
 
     /**
@@ -101,7 +143,7 @@ export interface IMatcher<
      */
     matchCase<Case extends string>(
         predicate: TMatcherPredicate<Context>,
-        resultCase: Case,
+        resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
     ): IMatcher<Context, Cases | Case>;
 
     /**
@@ -127,7 +169,7 @@ export interface IMatcher<
      */
     selectCase<Case extends string, T extends string & {}>(
         selector: TMatcherSelector<Context, T>,
-        caseMap: Record<T, Case>,
+        caseMap: Record<T, Case | TMatcherBranchDelegate<Context, Cases, Case>>,
     ): IMatcher<Context, Cases | Case>;
 
     /**

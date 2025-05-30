@@ -89,6 +89,57 @@ describe("Matcher", () => {
         });
     });
 
+    describe("Branching", () => {
+        describe("by match case", () => {
+            test.each([
+                [{ type: "num", foo: 42 }, "case2"],
+                [{ type: "num", foo: 30 }, "case3"],
+                [{ type: "str", foo: "bar" }, "case4"],
+            ])("WHEN: branch by condition %s", (ctx, expectedCase) => {
+                var m = matcher(ctx)
+                    .matchCase({ type: "num" }, (branch) => {
+                        branch
+                            .matchCase(({ foo }) => foo < 20, "case1")
+                            .matchCase(({ foo }) => foo > 40, "case2")
+                            .otherwise("case3");
+                    })
+                    .matchCase({ type: "str" }, "case4")
+                    .otherwise("case5");
+
+                // Act -----------
+                var result = m.resolve();
+
+                // Assert --------
+                expect(result).toBe(expectedCase);
+            });
+        });
+
+        describe("by select case", () => {
+            test.each([
+                [{ type: "num", foo: 42 }, "case2"],
+                [{ type: "num", foo: 30 }, "case3"],
+                [{ type: "str", foo: "bar" }, "case4"],
+            ])("WHEN: branch by condition %s", (ctx, expectedCase) => {
+                var m = matcher(ctx)
+                    .selectCase((ctx) => ctx.type, {
+                        num: (branch) =>
+                            branch
+                                .matchCase(({ foo }) => foo < 20, "case1")
+                                .matchCase(({ foo }) => foo > 40, "case2")
+                                .otherwise("case3"),
+                        str: "case4",
+                    })
+                    .otherwise("case5");
+
+                // Act --------
+                var result = m.resolve();
+
+                // Assert -----
+                expect(result).toBe(expectedCase);
+            });
+        });
+    });
+
     describe("Context mutation", () => {
         test("WHEN: extend context with null", () => {
             // Arrange ------
@@ -304,9 +355,9 @@ describe("Matcher", () => {
 
             test("WHEN: Take case from context value", () => {
                 // Arrange -------
-                var m = matcher({ caseKey: "bar" }).selectCase(
-                    (c) => c.caseKey,
-                );
+                var m = matcher({ caseKey: "bar" })
+                    .selectCase((c) => c.caseKey)
+                    .selectCase((c) => !c.caseKey && 'foo');
 
                 // Act -----------
                 var result = m.resolve();

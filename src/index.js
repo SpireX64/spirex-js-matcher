@@ -15,6 +15,16 @@ export function matcher(context) {
     var matchedCase = undefined;
     var currentContext = context;
 
+    function applyMatchedCase(caseOrBranch) {
+        if (typeof caseOrBranch === 'function') {
+            // Branch forwarding
+            caseOrBranch(this)
+        } else {
+            // Set matched case
+            matchedCase = caseOrBranch;
+        }
+    }
+
     function matchCasePattern(pattern, resultCase) {
         // Null-pattern is always unmatched
         if (!pattern) return;
@@ -33,7 +43,7 @@ export function matcher(context) {
             // Context must match given pattern
             if (!isMatchPattern) return;
         }
-        matchedCase = resultCase;
+        applyMatchedCase.apply(this, [resultCase]);
     }
 
     return {
@@ -43,25 +53,30 @@ export function matcher(context) {
         },
 
         matchCase(input, resultCase) {
-            var inputType = typeof input;
+            // Skip, if matched case was found
+            if (matchedCase) return this;
 
+            var inputType = typeof input;
             if (
                 (inputType === "boolean" && input) ||
                 (inputType === "function" && input(currentContext))
-            )
-                matchedCase = resultCase;
+            ) {
+                applyMatchedCase.apply(this, [resultCase]);
+            }
             else if (inputType === "object")
-                matchCasePattern(input, resultCase);
+                matchCasePattern.apply(this, [input, resultCase]);
 
             return this;
         },
 
         selectCase(selector, caseMap) {
+            // Skip, if matched case was found
+            if (matchedCase) return this;
             var caseKey = selector(currentContext);
             if (caseKey) {
                 if (caseMap) {
                     caseKey = caseMap[caseKey];
-                    if (caseKey) matchedCase = caseKey;
+                    if (caseKey) applyMatchedCase.apply(this, [caseKey])
                 } else {
                     matchedCase = caseKey;
                 }
