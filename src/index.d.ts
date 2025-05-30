@@ -12,6 +12,14 @@ export type TMatcherSelector<Context extends object, T> = (
     context: Context,
 ) => T;
 
+export type TMatcherComparator = {
+    compare(value: unknown): boolean;
+};
+
+export type TMatcherContextPattern<Context extends object> = {
+    [K in keyof Context]?: Context[K] | TMatcherComparator;
+};
+
 /** Utility type for merging two context objects */
 export type TContextMerge<
     A extends object,
@@ -53,11 +61,11 @@ export interface IMatcher<
      * Adds a new matching case using a context pattern.
      * Matches if all specified properties match the current context.
      *
-     * @param pattern A partial context object to match against.
+     * @param pattern A pattern object of context to match against.
      * @param resultCase The case identifier if the pattern matches.
      */
     matchCase<Case extends string>(
-        pattern: Partial<Context>,
+        pattern: TMatcherContextPattern<Context>,
         resultCase: Case,
     ): IMatcher<Context, Cases | Case>;
 
@@ -126,3 +134,26 @@ export interface IMatcher<
 export function matcher<Context extends object = {}>(
     context?: Context,
 ): IMatcher<Context>;
+
+export type TNumberComparatorOptions = {
+    min?: number;
+    max?: number;
+    integer?: boolean;
+    finite?: boolean;
+};
+
+export type TStringComparatorOptions = {
+    minLen?: number;
+    maxLen?: number;
+    pattern?: RegExp;
+};
+
+export namespace matcher {
+    export function number(
+        options?: TNumberComparatorOptions,
+    ): TMatcherComparator;
+
+    export function string(
+        options?: TStringComparatorOptions,
+    ): TMatcherComparator;
+}

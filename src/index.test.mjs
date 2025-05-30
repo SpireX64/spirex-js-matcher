@@ -376,4 +376,98 @@ describe("Matcher", () => {
             });
         });
     });
+
+    describe("Comparators", () => {
+        describe("Number comparator", () => {
+            test.each([
+                ["is number", 42, trueCase],
+                ["not is number", "foo", falseCase],
+            ])("WHEN: check value type %s", (_, value, expectedCase) => {
+                // Arrange --------
+                var m = matcher({ value })
+                    .matchCase({ value: matcher.number() }, trueCase)
+                    .otherwise(falseCase);
+
+                // Act ------------
+                var result = m.resolve();
+
+                // Assert ---------
+                expect(result).toBe(expectedCase);
+            });
+
+            test.each([
+                [20, trueCase],
+                [5, falseCase],
+            ])("WHEN: check value 10 less then %d max", (max, expectedCase) => {
+                // Arrange -----
+
+                var m = matcher({ value: 10 })
+                    .matchCase({ value: matcher.number({ max }) }, trueCase)
+                    .otherwise(falseCase);
+
+                // Act ---------
+                var result = m.resolve();
+
+                // Assert ------
+                expect(result).toBe(expectedCase);
+            });
+
+            test.each([
+                [37, trueCase],
+                [72, falseCase],
+            ])("WHEN: check value 42 more then %d max", (min, expectedCase) => {
+                // Arrange -----
+                var m = matcher({ value: 42 })
+                    .matchCase({ value: matcher.number({ min }) }, trueCase)
+                    .otherwise(falseCase);
+
+                // Act ---------
+                var result = m.resolve();
+
+                // Assert ------
+                expect(result).toBe(expectedCase);
+            });
+
+            test.each([
+                [32, trueCase],
+                [3.14, falseCase],
+            ])("WHEN: check value %d is integer", (value, expectedCase) => {
+                // Arrange -------
+                var m = matcher({ value })
+                    .matchCase(
+                        { value: matcher.number({ integer: true }) },
+                        trueCase,
+                    )
+                    .otherwise(falseCase);
+
+                // Act --------
+                var result = m.resolve();
+
+                // Assert -----
+                expect(result).toBe(expectedCase);
+            });
+
+            test.each([
+                [32, trueCase],
+                [3.14, trueCase],
+                [Infinity, falseCase],
+                [-Infinity, falseCase],
+                [NaN, falseCase],
+            ])("WHEN: check value %d is finite", (value, expectedCase) => {
+                // Arrange -------
+                var m = matcher({ value })
+                    .matchCase(
+                        { value: matcher.number({ finite: true }) },
+                        trueCase,
+                    )
+                    .otherwise(falseCase);
+
+                // Act --------
+                var result = m.resolve();
+
+                // Assert -----
+                expect(result).toBe(expectedCase);
+            });
+        });
+    });
 });

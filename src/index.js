@@ -3,6 +3,14 @@
 // MIT License
 // https://github.com/spirex64
 
+function checkIsComparator(value) {
+    return (
+        value &&
+        typeof value === "object" &&
+        typeof value.compare === "function"
+    );
+}
+
 export function matcher(context) {
     var matchedCase = undefined;
     var currentContext = context;
@@ -16,9 +24,12 @@ export function matcher(context) {
         if (patternKeys.length > 0) {
             var isMatchPattern =
                 currentContext &&
-                patternKeys.every((key) =>
-                    Object.is(currentContext[key], pattern[key]),
-                );
+                patternKeys.every((key) => {
+                    var valuePattern = pattern[key];
+                    return checkIsComparator(valuePattern)
+                        ? valuePattern.compare(currentContext[key])
+                        : Object.is(currentContext[key], valuePattern);
+                });
             // Context must match given pattern
             if (!isMatchPattern) return;
         }
@@ -68,3 +79,47 @@ export function matcher(context) {
         },
     };
 }
+
+Object.assign(matcher, {
+    number: (options) => ({
+        compare: (value) => {
+            if (typeof value !== "number") return false;
+            if (options) {
+                if (options.min !== undefined && value < options.min)
+                    return false;
+                if (options.max !== undefined && value > options.max)
+                    return false;
+                if (options.integer && !Number.isInteger(value)) return false;
+                if (options.finite && !Number.isFinite(value)) return false;
+            }
+            return true;
+        },
+    }),
+
+    string: (options) => ({
+        compare: (value) => {
+            if (typeof value !== "string") return false;
+            if (options) {
+                if (
+                    options.minLen !== undefined &&
+                    value.length < options.minLen
+                )
+                    return false;
+                if (
+                    options.maxLen !== undefined &&
+                    value.length > options.maxLen
+                )
+                    return false;
+                if (
+                    options.pattern !== undefined &&
+                    !(
+                        options.pattern instanceof RegExp &&
+                        options.pattern.test(value)
+                    )
+                )
+                    return false;
+            }
+            return true;
+        },
+    }),
+});
