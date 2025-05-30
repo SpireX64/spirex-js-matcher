@@ -8,16 +8,40 @@ export type TMatcherPredicate<Context extends object> = (
     context: Context,
 ) => boolean;
 
+/**
+ * A function that selects a value from the matcher context.
+ *
+ * @template Context - The type of the context.
+ * @template T - The type of the selected value.
+ * @param context - The current matcher context.
+ * @returns The selected value.
+ */
 export type TMatcherSelector<Context extends object, T> = (
     context: Context,
 ) => T;
 
-export type TMatcherComparator = {
+/**
+ * Interface for a value comparator used in matcher patterns.
+ * Can be used to define advanced comparison logic for context fields.
+ */
+export type IMatcherComparator = {
+    /**
+     * Compares a value to determine if it satisfies certain conditions.
+     *
+     * @param value - The value to compare.
+     * @returns `true` if the value matches the condition, false otherwise.
+     */
     compare(value: unknown): boolean;
 };
 
+/**
+ * A pattern object that can be used to match against the matcher context.
+ * Each field can be a direct value or a custom comparator.
+ *
+ * @template Context - The type of the matcher context.
+ */
 export type TMatcherContextPattern<Context extends object> = {
-    [K in keyof Context]?: Context[K] | TMatcherComparator;
+    [K in keyof Context]?: Context[K] | IMatcherComparator;
 };
 
 /** Utility type for merging two context objects */
@@ -80,10 +104,27 @@ export interface IMatcher<
         resultCase: Case,
     ): IMatcher<Context, Cases | Case>;
 
+    /**
+     * Selects a case key based on a value extracted from the matcher context.
+     * Useful for when the case depends on some property or computation.
+     *
+     * @template Case - The resulting case key.
+     * @param selector - A function that selects the case key from the context.
+     * @returns The updated matcher instance.
+     */
     selectCase<Case extends string>(
         selector: TMatcherSelector<Context, Case>,
     ): IMatcher<Context, Cases | Case>;
 
+    /**
+     * Selects a case key based on a context value and maps it to a final case using a provided map.
+     *
+     * @template Case - The resulting case key.
+     * @template T - The intermediate key selected from the context.
+     * @param selector - A function that selects a key from the context.
+     * @param caseMap - A map that converts the selected key into a final case key.
+     * @returns The updated matcher instance.
+     */
     selectCase<Case extends string, T extends string & {}>(
         selector: TMatcherSelector<Context, T>,
         caseMap: Record<T, Case>,
@@ -149,11 +190,23 @@ export type TStringComparatorOptions = {
 };
 
 export namespace matcher {
+    /**
+     * Creates a numeric comparator with optional constraints.
+     *
+     * @param options - Optional constraints such as min, max, integer, or finite.
+     * @returns A comparator that checks whether a number satisfies the given constraints.
+     */
     export function number(
         options?: TNumberComparatorOptions,
-    ): TMatcherComparator;
+    ): IMatcherComparator;
 
+    /**
+     * Creates a string comparator with optional constraints.
+     *
+     * @param options - Optional constraints such as minLen, maxLen, or pattern.
+     * @returns A comparator that checks whether a string satisfies the given constraints.
+     */
     export function string(
         options?: TStringComparatorOptions,
-    ): TMatcherComparator;
+    ): IMatcherComparator;
 }
