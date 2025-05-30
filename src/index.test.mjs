@@ -219,6 +219,20 @@ describe("Matcher", () => {
             // Assert --------
             expect(result).toBe(trueCase);
         });
+
+        test("WHEN: mutate context with mapper", () => {
+            // Arrange -----
+            var m = matcher({ value: 42 })
+                .mapContext(ctx =>  ({ value: ctx.value * 100 }))
+                .matchCase({ value: matcher.number({ min: 1000 }) }, trueCase)
+                .otherwise(falseCase);
+
+            // Act ---------
+            var result = m.resolve();
+
+            // Assert ------
+            expect(result).toBe(trueCase);
+        })
     });
 
     describe("Resolve", () => {

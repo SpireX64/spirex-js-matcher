@@ -5,9 +5,7 @@
 
 function checkIsComparator(value) {
     return (
-        value &&
-        typeof value === "object" &&
-        typeof value.test === "function"
+        value && typeof value === "object" && typeof value.test === "function"
     );
 }
 
@@ -16,9 +14,9 @@ export function matcher(context) {
     var currentContext = context;
 
     function applyMatchedCase(caseOrBranch) {
-        if (typeof caseOrBranch === 'function') {
+        if (typeof caseOrBranch === "function") {
             // Branch forwarding
-            caseOrBranch(this)
+            caseOrBranch(this);
         } else {
             // Set matched case
             matchedCase = caseOrBranch;
@@ -52,6 +50,11 @@ export function matcher(context) {
             return this;
         },
 
+        mapContext(mapper) {
+            currentContext = mapper(currentContext);
+            return this;
+        },
+
         forward(delegate) {
             return matchedCase ? this : delegate(this);
         },
@@ -66,8 +69,7 @@ export function matcher(context) {
                 (inputType === "function" && input(currentContext))
             ) {
                 applyMatchedCase.apply(this, [resultCase]);
-            }
-            else if (inputType === "object")
+            } else if (inputType === "object")
                 matchCasePattern.apply(this, [input, resultCase]);
 
             return this;
@@ -80,7 +82,7 @@ export function matcher(context) {
             if (caseKey) {
                 if (caseMap) {
                     caseKey = caseMap[caseKey];
-                    if (caseKey) applyMatchedCase.apply(this, [caseKey])
+                    if (caseKey) applyMatchedCase.apply(this, [caseKey]);
                 } else {
                     matchedCase = caseKey;
                 }

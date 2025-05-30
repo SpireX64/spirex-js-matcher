@@ -44,6 +44,17 @@ export type TMatcherContextPattern<Context extends object> = {
     [K in keyof Context]?: Context[K] | IMatcherComparator;
 };
 
+/**
+ * A function that transforms the current context into a new context.
+ *
+ * @template Context - Origin context type
+ * @template ContextMapped - New context type after mapping
+ */
+export type TMatcherContextMapper<
+    Context extends object,
+    ContextMapped extends object,
+> = (context: Context) => ContextMapped;
+
 /** Utility type for merging two context objects */
 export type TContextMerge<
     A extends object,
@@ -61,14 +72,51 @@ export interface IMatcherBranch<
     Cases extends string = undefined,
 > {
     /**
-     * Extends the current context with new values.
-     * Useful for mutating or enriching the context during matching.
+     * Extends the current matcher context by merging additional fields.
      *
-     * @param ext Additional context to merge. `null` is ignored.
+     * Unlike `mapContext`, which replaces the entire context,
+     * `withContext` merges the provided object into the existing context,
+     * making the new fields available in subsequent matcher calls.
+     *
+     * @template ContextExt - the type of the additional context fields to merge
+     *
+     * @param ext - an object containing new fields to merge into the current context
+     * @returns a new matcher branch with the extended context
+     *
+     * @example
+     * ```ts
+     * matcher({ user: { name: 'Alice' } })
+     *   .withContext({ isLoggedIn: true })
+     *   .matchCase({ isLoggedIn: true }, 'loggedInUser')
+     *   .otherwise('guestUser')
+     *   .resolve(); // 'loggedInUser'
+     * ```
      */
     withContext<ContextExt extends object | null>(
         ext: ContextExt,
     ): IMatcherBranch<TContextMerge<Context, ContextExt>, Cases>;
+
+    /**
+     * Replaces the current context with the result of the provided mapper function.
+     *
+     * Unlike `withContext`, which merges new fields into the existing context,
+     * `mapContext` completely replaces the context passed to subsequent matcher method calls.
+     *
+     * @param mapper - a function that receives the current context and returns a new one
+     * @returns a new matcher branch with the updated context
+     *
+     * @example
+     * ```ts
+     * matcher({ numbers: [1, 2, 3] })
+     *   .mapContext(ctx => ({ sum: ctx.numbers.reduce((a, b) => a + b, 0) }))
+     *   .matchCase(ctx => ctx.sum > 5, 'largeSum')
+     *   .otherwise('smallSum')
+     *   .resolve(); // 'largeSum'
+     * ```
+     */
+    mapContext<ContextMapped extends object>(
+        mapper: TMatcherContextMapper<Context, ContextMapped>,
+    ): IMatcherBranch<ContextMapped, Cases>;
 
     /**
      * Forwards control to a delegated matcher branch, allowing for encapsulated matching logic.
@@ -92,7 +140,12 @@ export interface IMatcherBranch<
      * @returns A new matcher branch with updated context and combined case types.
      */
     forward<ForwardCases extends string, ForwardContext extends object>(
-        delegate: TMatcherBranchDelegate<Context, Cases, ForwardCases, ForwardContext>,
+        delegate: TMatcherBranchDelegate<
+            Context,
+            Cases,
+            ForwardCases,
+            ForwardContext
+        >,
     ): IMatcherBranch<ForwardContext, Cases | ForwardCases>;
 
     /**
@@ -260,7 +313,10 @@ export type TMatcherBranchDelegate<
  * @template Context - The type of the input context being matched.
  * @template Cases - The resulting type after matching cases.
  */
-export interface IMatcher<Context extends object, Cases extends string = undefined> extends IMatcherBranch<Context, Cases> {
+export interface IMatcher<
+    Context extends object,
+    Cases extends string = undefined,
+> extends IMatcherBranch<Context, Cases> {
     /**
      * Resolves and returns the matched case key.
      * Returns `undefined` if no case matched and no fallback is defined.
@@ -293,8 +349,17 @@ export interface IMatcher<Context extends object, Cases extends string = undefin
         ext: ContextExt,
     ): IMatcher<TContextMerge<Context, ContextExt>, Cases>;
 
+    mapContext<ContextMapped extends object>(
+        mapper: TMatcherContextMapper<Context, ContextMapped>,
+    ): IMatcher<ContextMapped, Cases>;
+
     forward<ForwardCases extends string, BranchContext extends object>(
-        delegate: TMatcherBranchDelegate<Context, Cases, ForwardCases, BranchContext>,
+        delegate: TMatcherBranchDelegate<
+            Context,
+            Cases,
+            ForwardCases,
+            BranchContext
+        >,
     ): IMatcher<BranchContext, Cases | ForwardCases>;
 
     matchCase<Case extends string>(
