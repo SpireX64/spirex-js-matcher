@@ -26,12 +26,12 @@ export type TMatcherSelector<Context extends object, T> = (
  */
 export type IMatcherComparator = {
     /**
-     * Compares a value to determine if it satisfies certain conditions.
+     * Test a value to determine if it satisfies certain conditions.
      *
-     * @param value - The value to compare.
+     * @param value - The value to test.
      * @returns `true` if the value matches the condition, false otherwise.
      */
-    compare(value: unknown): boolean;
+    test(value: unknown): boolean;
 };
 
 /**

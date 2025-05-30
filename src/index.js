@@ -7,7 +7,7 @@ function checkIsComparator(value) {
     return (
         value &&
         typeof value === "object" &&
-        typeof value.compare === "function"
+        typeof value.test === "function"
     );
 }
 
@@ -27,7 +27,7 @@ export function matcher(context) {
                 patternKeys.every((key) => {
                     var valuePattern = pattern[key];
                     return checkIsComparator(valuePattern)
-                        ? valuePattern.compare(currentContext[key])
+                        ? valuePattern.test(currentContext[key])
                         : Object.is(currentContext[key], valuePattern);
                 });
             // Context must match given pattern
@@ -82,7 +82,7 @@ export function matcher(context) {
 
 Object.assign(matcher, {
     number: (options) => ({
-        compare: (value) => {
+        test: (value) => {
             if (typeof value !== "number") return false;
             if (options) {
                 if (options.min !== undefined && value < options.min)
@@ -97,7 +97,7 @@ Object.assign(matcher, {
     }),
 
     string: (options) => ({
-        compare: (value) => {
+        test: (value) => {
             if (typeof value !== "string") return false;
             if (options) {
                 if (
