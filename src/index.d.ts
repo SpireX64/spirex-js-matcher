@@ -70,15 +70,55 @@ export interface IMatcherBranch<
         ext: ContextExt,
     ): IMatcherBranch<TContextMerge<Context, ContextExt>, Cases>;
 
-    forward<ForwardCases extends string, BranchContext extends object>(
-        delegate: TMatcherBranchDelegate<Context, Cases, ForwardCases, BranchContext>,
-    ): IMatcherBranch<BranchContext, Cases | ForwardCases>;
+    /**
+     * Forwards control to a delegated matcher branch, allowing for encapsulated matching logic.
+     *
+     * This method is used to offload part of the matching process to a separate matcher
+     * branch. It enables custom logic (e.g., parsing, validation, normalization)
+     * to be handled before continuing the main matcher chain.
+     *
+     * The delegated matcher can transform the context and produce its own set of result cases,
+     * which are then merged back into the main matcher flow.
+     *
+     * Useful for:
+     * - Delegating to reusable matcher configurations (e.g., from JSON or presets)
+     * - Parsing or preprocessing context before continuing
+     * - Creating nested or scoped matching trees
+     *
+     * @template ForwardCases - The case result types returned from the delegated matcher.
+     * @template ForwardContext - The context type returned from the delegated matcher.
+     *
+     * @param delegate - A function that receives the current matcher branch and returns a new branch matcher.
+     * @returns A new matcher branch with updated context and combined case types.
+     */
+    forward<ForwardCases extends string, ForwardContext extends object>(
+        delegate: TMatcherBranchDelegate<Context, Cases, ForwardCases, ForwardContext>,
+    ): IMatcherBranch<ForwardContext, Cases | ForwardCases>;
 
     /**
-     * Adds a new matching case using a boolean condition.
+     * Adds a match case to the matcher using boolean condition.
      *
-     * @param condition The condition to evaluate.
-     * @param resultCase The case identifier if the condition is true.
+     * This allows branching into more detailed logic while keeping the matcher chain fluent and expressive.
+     *
+     * @template Case - The case identifier to be added or returned from the delegate.
+     *
+     * @param condition - A simple boolean that determines whether the case should match.
+     * @param resultCase - The resulting case string or a matcher delegate function.
+     * @returns A matcher with an updated set of possible result cases.
+     *
+     * @example static case
+     * matcher()
+     *   .matchCase(true, 'debug')
+     *   .otherwise('release')
+     *   .resolve(); // 'debug'
+     *
+     * @example with delegate branching
+     * matcher({ isActive: true })
+     *   .matchCase(true, m =>
+     *     m.matchCase(ctx => ctx.isActive, 'confirmed')
+     *   )
+     *   .otherwise('inactive')
+     *   .resolve(); // 'confirmed'
      */
     matchCase<Case extends string>(
         condition: boolean,
@@ -86,11 +126,27 @@ export interface IMatcherBranch<
     ): IMatcherBranch<Context, Cases | Case>;
 
     /**
-     * Adds a new matching case using a context pattern.
-     * Matches if all specified properties match the current context.
+     * Adds a match case using a structural pattern to match context values.
      *
-     * @param pattern A pattern object of context to match against.
-     * @param resultCase The case identifier if the pattern matches.
+     * @template Case - The case identifier to be added or returned from the delegate.
+     *
+     * @param pattern - A partial object structure to match against the context.
+     * @param resultCase - The resulting case string or a matcher delegate function.
+     * @returns A matcher with an updated set of possible result cases.
+     *
+     * @example static value check
+     * matcher({ role: "admin" })
+     *   .matchCase({ role: "admin" }, "access")
+     *   .otherwise("deny")
+     *   .resolve(); // Returns "access"
+     *
+     * @example matching value with comparator
+     * matcher({ age: 27 })
+     *    .matchCase({
+     *       age: matcher.number({ min: 18 }),
+     *    }, "adult")
+     *    .otherwise("young")
+     *    .resolve(); // Returns "adult"
      */
     matchCase<Case extends string>(
         pattern: TMatcherContextPattern<Context>,
@@ -98,10 +154,23 @@ export interface IMatcherBranch<
     ): IMatcherBranch<Context, Cases | Case>;
 
     /**
-     * Adds a new matching case using a predicate function.
+     * Adds a match case using a predicate function to evaluate the context.
      *
-     * @param predicate A function that receives the current context and returns true if the case should match.
-     * @param resultCase The case identifier if the predicate returns true.
+     * @template Case - The case identifier to be added or returned from the delegate.
+     *
+     * @param predicate - A function that returns `true` if the context matches.
+     * @param resultCase - The resulting case string or a matcher delegate function.
+     * @returns A matcher with an updated set of possible result cases.
+     *
+     * @example
+     * matcher({ age: 19, rights: "free" })
+     *   .matchCase(ctx => ctx.age >= 16, branch =>
+     *     branch
+     *       .matchCase(ctx => ctx.rights === "pro", "full")
+     *       .otherwise("basic")
+     *   )
+     *   .otherwise("child")
+     *   .resolve() // Returns "basic"
      */
     matchCase<Case extends string>(
         predicate: TMatcherPredicate<Context>,
@@ -109,25 +178,42 @@ export interface IMatcherBranch<
     ): IMatcherBranch<Context, Cases | Case>;
 
     /**
-     * Selects a case key based on a value extracted from the matcher context.
-     * Useful for when the case depends on some property or computation.
+     * Selects a case based on a value derived from the context.
      *
-     * @template Case - The resulting case key.
-     * @param selector - A function that selects the case key from the context.
-     * @returns The updated matcher instance.
+     * This method enables simple case selection based on primitive values like strings or numbers.
+     *
+     * @template Case - The selected case identifier.
+     * @param selector - A function to extract a value from the context to be used as the result case.
+     * @returns A matcher with the extracted case added to the result case set.
+     *
+     * @example
+     * matcher({ name: "alice" })
+     *   .selectCase(ctx => ctx.name)
+     *   .resolve(); // Returns "alice"
      */
     selectCase<Case extends string>(
         selector: TMatcherSelector<Context, Case>,
     ): IMatcherBranch<Context, Cases | Case>;
 
     /**
-     * Selects a case key based on a context value and maps it to a final case using a provided map.
+     * Selects a case based on a mapped value from the context.
      *
-     * @template Case - The resulting case key.
-     * @template T - The intermediate key selected from the context.
-     * @param selector - A function that selects a key from the context.
-     * @param caseMap - A map that converts the selected key into a final case key.
-     * @returns The updated matcher instance.
+     * This form allows more flexible case routing using a lookup map.
+     * Each entry in the map can point either to a case string or a matcher branch delegate for further branching.
+     *
+     * @template Case - The resulting case type after map resolution.
+     * @template T - The keys returned by the selector function.
+     * @param selector - A function to extract a key from the context.
+     * @param caseMap - A mapping from keys to result cases or matcher delegates.
+     * @returns A matcher with an updated set of possible result cases.
+     *
+     * @example
+     * matcher({ type: "gift" })
+     *   .selectCase(ctx => ctx.type, {
+     *     gift: "giftCase",
+     *     promo: branch => branch.matchCase(...),
+     *   })
+     *   .resolve(); // Returns "giftCase"
      */
     selectCase<Case extends string, T extends string & {}>(
         selector: TMatcherSelector<Context, T>,
@@ -144,10 +230,24 @@ export interface IMatcherBranch<
     ): IMatcherBranch<Context, Cases | Case>;
 }
 
+/**
+ * A delegate function used to define a branching matcher logic.
+ *
+ * Typically used to create isolated matching branches with their own internal logic,
+ * which can update the matching context and result set independently of the parent matcher.
+ *
+ * @template Context - The original input context type from the parent matcher.
+ * @template Cases - The original case result type from the parent matcher.
+ * @template BranchCases - The (optional) result type returned from the delegated matcher branch.
+ * @template BranchContext - The (optional) updated context type for the delegated branch.
+ *
+ * @param branch - The current matcher branch based on the original context and cases.
+ * @returns A new matcher branch, potentially with its own context and matching outcomes.
+ */
 export type TMatcherBranchDelegate<
     Context extends object,
     Cases extends string,
-    BranchCases extends string,
+    BranchCases extends string = Cases,
     BranchContext extends object = Context,
 > = (
     branch: IMatcherBranch<Context, Cases>,
