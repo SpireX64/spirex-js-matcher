@@ -398,35 +398,41 @@ describe("Matcher", () => {
             test.each([
                 [20, trueCase],
                 [5, falseCase],
-            ])("WHEN: check value 10 less then %d max", (max, expectedCase) => {
-                // Arrange -----
+            ])(
+                "WHEN: check value 10 is less then %d max",
+                (max, expectedCase) => {
+                    // Arrange -----
 
-                var m = matcher({ value: 10 })
-                    .matchCase({ value: matcher.number({ max }) }, trueCase)
-                    .otherwise(falseCase);
+                    var m = matcher({ value: 10 })
+                        .matchCase({ value: matcher.number({ max }) }, trueCase)
+                        .otherwise(falseCase);
 
-                // Act ---------
-                var result = m.resolve();
+                    // Act ---------
+                    var result = m.resolve();
 
-                // Assert ------
-                expect(result).toBe(expectedCase);
-            });
+                    // Assert ------
+                    expect(result).toBe(expectedCase);
+                },
+            );
 
             test.each([
                 [37, trueCase],
                 [72, falseCase],
-            ])("WHEN: check value 42 more then %d max", (min, expectedCase) => {
-                // Arrange -----
-                var m = matcher({ value: 42 })
-                    .matchCase({ value: matcher.number({ min }) }, trueCase)
-                    .otherwise(falseCase);
+            ])(
+                "WHEN: check value 42 is greater then %d max",
+                (min, expectedCase) => {
+                    // Arrange -----
+                    var m = matcher({ value: 42 })
+                        .matchCase({ value: matcher.number({ min }) }, trueCase)
+                        .otherwise(falseCase);
 
-                // Act ---------
-                var result = m.resolve();
+                    // Act ---------
+                    var result = m.resolve();
 
-                // Assert ------
-                expect(result).toBe(expectedCase);
-            });
+                    // Assert ------
+                    expect(result).toBe(expectedCase);
+                },
+            );
 
             test.each([
                 [32, trueCase],
@@ -468,6 +474,94 @@ describe("Matcher", () => {
                 // Assert -----
                 expect(result).toBe(expectedCase);
             });
+        });
+
+        describe("String comparator", () => {
+            test.each([
+                ["foo", trueCase],
+                [42, falseCase],
+            ])(
+                "WHEN: check value (%s) is string value",
+                (value, expectedCase) => {
+                    // Arrange ---------
+                    var m = matcher({ value })
+                        .matchCase({ value: matcher.string() }, trueCase)
+                        .otherwise(falseCase);
+
+                    // Act --------------
+                    var result = m.resolve();
+
+                    // Assert -----------
+                    expect(result).toBe(expectedCase);
+                },
+            );
+
+            test.each([
+                ["bar", trueCase],
+                ["lorem", falseCase],
+            ])(
+                "WHEN: check string (%s) length is less 4",
+                (value, expectedCase) => {
+                    // Arrange ----------
+                    var m = matcher({ value })
+                        .matchCase(
+                            { value: matcher.string({ maxLen: 4 }) },
+                            trueCase,
+                        )
+                        .otherwise(falseCase);
+
+                    // Act --------------
+                    var result = m.resolve();
+
+                    // Assert -----------
+                    expect(result).toBe(expectedCase);
+                },
+            );
+
+            test.each([
+                ["qwe", falseCase],
+                ["ipsum", trueCase],
+            ])(
+                "WHEN: check string (%s) length is greater than 4",
+                (value, expectedCase) => {
+                    // Arrange -----
+                    var m = matcher({ value })
+                        .matchCase(
+                            { value: matcher.string({ minLen: 4 }) },
+                            trueCase,
+                        )
+                        .otherwise(falseCase);
+
+                    // Act ---------
+                    var result = m.resolve();
+
+                    // Assert ------
+                    expect(result).toBe(expectedCase);
+                },
+            );
+
+            test.each([
+                ["foo42", trueCase],
+                ["255bit", falseCase],
+            ])(
+                "WHEN: check string (%s) is match pattern",
+                (value, expectedCase) => {
+                    // Arrange ------
+                    var pattern = /^[a-z]+[0-9]+$/i;
+                    var m = matcher({ value })
+                        .matchCase(
+                            { value: matcher.string({ pattern }) },
+                            trueCase,
+                        )
+                        .otherwise(falseCase);
+
+                    // Act ---------
+                    var result = m.resolve();
+
+                    // Assert ------
+                    expect(result).toBe(expectedCase);
+                },
+            );
         });
     });
 });
