@@ -52,6 +52,10 @@ export function matcher(context) {
             return this;
         },
 
+        forward(delegate) {
+            return matchedCase ? this : delegate(this);
+        },
+
         matchCase(input, resultCase) {
             // Skip, if matched case was found
             if (matchedCase) return this;

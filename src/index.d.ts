@@ -88,9 +88,10 @@ export type TMatcherBranchDelegate<
     Context extends object,
     Cases extends string,
     BranchCases extends string,
+    BranchContext extends object = Context,
 > = (
     branch: IMatcherBranch<Context, Cases>,
-) => IMatcherBranch<Context, BranchCases>;
+) => IMatcherBranch<BranchContext, BranchCases>;
 
 /**
  * Matcher interface for building conditional case logic based on context.
@@ -111,6 +112,10 @@ export interface IMatcher<
     withContext<ContextExt extends object | null>(
         ext: ContextExt,
     ): IMatcher<TContextMerge<Context, ContextExt>, Cases>;
+
+    forward<ForwardCases extends string, BranchContext extends object>(
+        delegate: TMatcherBranchDelegate<Context, Cases, ForwardCases, BranchContext>,
+    ): IMatcher<BranchContext, Cases | ForwardCases>;
 
     /**
      * Adds a new matching case using a boolean condition.

@@ -138,6 +138,19 @@ describe("Matcher", () => {
                 expect(result).toBe(expectedCase);
             });
         });
+
+        describe("forwarding", () => {
+            // Arrange -----------
+            var m = matcher({ value: 42 })
+                .forward((branch) => branch.matchCase({ value: 42 }, trueCase))
+                .otherwise(falseCase);
+
+            // Act ---------------
+            var result = m.resolve();
+
+            // Assert ------------
+            expect(result).toBe(trueCase);
+        });
     });
 
     describe("Context mutation", () => {
@@ -357,7 +370,7 @@ describe("Matcher", () => {
                 // Arrange -------
                 var m = matcher({ caseKey: "bar" })
                     .selectCase((c) => c.caseKey)
-                    .selectCase((c) => !c.caseKey && 'foo');
+                    .selectCase((c) => !c.caseKey && "foo");
 
                 // Act -----------
                 var result = m.resolve();
