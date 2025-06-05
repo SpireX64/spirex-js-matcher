@@ -641,6 +641,47 @@ describe("Matcher", () => {
         });
     });
 
+    describe("Pick state", () => {
+        test("WHEN: Pick state of new empty matcher", () => {
+            // Arrange -----------
+            var m = matcher();
+            var picker = vi.fn()
+
+            // Act ---------------
+            m.pick(picker);
+
+            // Assert ------------
+            expect(picker).toHaveBeenCalledWith({}, undefined)
+        })
+
+        test("WHEN: Pick state of new matcher with context", () => {
+            // Arrange ------
+            var ctx = { foo: 42 };
+            var m = matcher(ctx);
+            var picker = vi.fn()
+
+            // Act ----------
+            m.pick(picker);
+
+            // Assert -------
+            expect(picker).toHaveBeenCalledWith(ctx, undefined)
+        })
+
+        test("WHEN: Pick state before and after match case", () => {
+            // Arrange ------
+            var ctx = { foo: 42 };
+            var m = matcher(ctx)
+            var picker = vi.fn()
+
+            // Act ----------
+            m.pick(picker).otherwise(trueCase).pick(picker);
+
+            // Assert -------
+            expect(picker).toHaveBeenNthCalledWith(1, ctx, undefined)
+            expect(picker).toHaveBeenNthCalledWith(2, ctx, trueCase)
+        })
+    })
+
     describe("Comparators", () => {
         describe("Number comparator", () => {
             test.each([

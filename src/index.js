@@ -70,6 +70,10 @@ export function matcher(context) {
             return this;
         },
 
+        pick(picker) {
+            return picker(getContext(), matchedCase), this
+        },
+
         unwrap(delegate) {
             var isBranch = contextStack.length > 1;
             var originContextIndex = isBranch ? 2 : 1;

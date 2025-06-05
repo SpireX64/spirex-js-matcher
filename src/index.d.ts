@@ -25,6 +25,11 @@ export type TMatcherSelector<Context extends object, T> = (
     context: Readonly<Context>,
 ) => T;
 
+export type TMatcherPicker<Context extends object, Case extends string & {}> = (
+    context: Readonly<Context>,
+    matchedCase: Case,
+) => void;
+
 export type TMatcherResolver<
     Result,
     Context extends object,
@@ -81,7 +86,10 @@ export type TMatcherContextMergeDelegate<
     CurrentContext extends object,
     ParentContext extends object,
     ResultContext extends object,
-> = (context: Readonly<CurrentContext>, parentContext: Readonly<ParentContext>) => ResultContext;
+> = (
+    context: Readonly<CurrentContext>,
+    parentContext: Readonly<ParentContext>,
+) => ResultContext;
 
 /** Utility type for merging two context objects */
 export type TContextMerge<
@@ -221,7 +229,7 @@ export interface IMatcherBranch<
         >,
     ): ResultContext;
 
-    pick()
+    pick(picker: TMatcherPicker<Context, Cases>): this
 
     /**
      * Adds a match case to the matcher using boolean condition.
@@ -429,7 +437,11 @@ export interface IMatcher<
 
     withContext<ContextExt extends object | null>(
         ext: ContextExt,
-    ): IMatcher<Prettify<TContextMerge<Context, ContextExt>>, Cases, OriginContext>;
+    ): IMatcher<
+        Prettify<TContextMerge<Context, ContextExt>>,
+        Cases,
+        OriginContext
+    >;
 
     mapContext<ContextMapped extends object>(
         mapper: TMatcherContextMapper<Context, ContextMapped>,
