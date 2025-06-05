@@ -3,6 +3,11 @@
 // MIT License
 // https://github.com/spirex64
 
+/** Utility type that takes an object type and makes the hover overlay more readable */
+type Prettify<T extends object> = {
+    [K in keyof T]: T[K];
+} & {};
+
 /** A predicate function used to match the given context. */
 export type TMatcherPredicate<Context extends object> = (
     context: Context,
@@ -61,6 +66,23 @@ export type TMatcherContextMapper<
     ContextMapped extends object,
 > = (context: Context) => ContextMapped;
 
+/**
+ * A delegate function to merge the origin context with the result context of a matcher branch.
+ *
+ * @template CurrentContext The current (inner) context.
+ * @template ParentContext The original (parent) context.
+ * @template ResultContext The final merged context.
+ *
+ * @param context The context returned from the matcher or matcher branch.
+ * @param parentContext The original parent context.
+ * @returns Merged context to continue processing with.
+ */
+export type TMatcherContextMergeDelegate<
+    CurrentContext extends object,
+    ParentContext extends object,
+    ResultContext extends object,
+> = (context: CurrentContext, parentContext: ParentContext) => ResultContext;
+
 /** Utility type for merging two context objects */
 export type TContextMerge<
     A extends object,
@@ -76,6 +98,7 @@ export type TContextMerge<
 export interface IMatcherBranch<
     Context extends object,
     Cases extends string = undefined,
+    ParentContext extends object = Context,
 > {
     /**
      * Extends the current matcher context by merging additional fields.
@@ -100,7 +123,11 @@ export interface IMatcherBranch<
      */
     withContext<ContextExt extends object | null>(
         ext: ContextExt,
-    ): IMatcherBranch<TContextMerge<Context, ContextExt>, Cases>;
+    ): IMatcherBranch<
+        Prettify<TContextMerge<Context, ContextExt>>,
+        Cases,
+        ParentContext
+    >;
 
     /**
      * Replaces the current context with the result of the provided mapper function.
@@ -122,7 +149,7 @@ export interface IMatcherBranch<
      */
     mapContext<ContextMapped extends object>(
         mapper: TMatcherContextMapper<Context, ContextMapped>,
-    ): IMatcherBranch<ContextMapped, Cases>;
+    ): IMatcherBranch<Prettify<ContextMapped>, Cases, ParentContext>;
 
     /**
      * Forwards control to a delegated matcher branch, allowing for encapsulated matching logic.
@@ -150,9 +177,49 @@ export interface IMatcherBranch<
             Context,
             Cases,
             ForwardCases,
-            ForwardContext
+            ForwardContext,
+            ParentContext
         >,
-    ): IMatcherBranch<ForwardContext, Cases | ForwardCases>;
+    ): IMatcherBranch<
+        Prettify<ForwardContext>,
+        Cases | ForwardCases,
+        ParentContext
+    >;
+
+    /**
+     * Terminates the current matcher branch and returns the current context.
+     *
+     * Use this when you want to finish processing the current branch and
+     * extract its context as-is.
+     *
+     * @returns The current context after all branch manipulations.
+     */
+    unwrap(): Context;
+
+    /**
+     * Terminates the current matcher branch and returns a merged context,
+     * where the merging logic is defined by the provided delegate function.
+     *
+     * The delegate function receives two arguments:
+     * - `current` — the current branch's context after manipulations;
+     * - `origin` — the parent/original context before the current branch's manipulations.
+     *
+     * Use this overload to implement custom merging or selection logic
+     * between the original and current contexts before returning the final result.
+     *
+     * @template ResultContext The resulting merged context type.
+     * @param delegate
+     *     Merge delegate function that receives the current and original context
+     *     and returns the merged context.
+     * @returns The merged context after applying the delegate.
+     */
+    unwrap<ResultContext extends object>(
+        delegate: TMatcherContextMergeDelegate<
+            Context,
+            ParentContext,
+            ResultContext
+        >,
+    ): ResultContext;
 
     /**
      * Adds a match case to the matcher using boolean condition.
@@ -182,7 +249,7 @@ export interface IMatcherBranch<
     matchCase<Case extends string>(
         condition: boolean,
         resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
-    ): IMatcherBranch<Context, Cases | Case>;
+    ): IMatcherBranch<Prettify<Context>, Cases | Case, ParentContext>;
 
     /**
      * Adds a match case using a structural pattern to match context values.
@@ -210,7 +277,7 @@ export interface IMatcherBranch<
     matchCase<Case extends string>(
         pattern: TMatcherContextPattern<Context>,
         resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
-    ): IMatcherBranch<Context, Cases | Case>;
+    ): IMatcherBranch<Prettify<Context>, Cases | Case, ParentContext>;
 
     /**
      * Adds a match case using a predicate function to evaluate the context.
@@ -234,7 +301,7 @@ export interface IMatcherBranch<
     matchCase<Case extends string>(
         predicate: TMatcherPredicate<Context>,
         resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
-    ): IMatcherBranch<Context, Cases | Case>;
+    ): IMatcherBranch<Prettify<Context>, Cases | Case, ParentContext>;
 
     /**
      * Selects a case based on a value derived from the context.
@@ -252,7 +319,7 @@ export interface IMatcherBranch<
      */
     selectCase<Case extends string>(
         selector: TMatcherSelector<Context, Case>,
-    ): IMatcherBranch<Context, Cases | Case>;
+    ): IMatcherBranch<Prettify<Context>, Cases | Case, ParentContext>;
 
     /**
      * Selects a case based on a mapped value from the context.
@@ -277,7 +344,7 @@ export interface IMatcherBranch<
     selectCase<Case extends string, T extends string & {}>(
         selector: TMatcherSelector<Context, T>,
         caseMap: Record<T, Case | TMatcherBranchDelegate<Context, Cases, Case>>,
-    ): IMatcherBranch<Context, Cases | Case>;
+    ): IMatcherBranch<Prettify<Context>, Cases | Case, ParentContext>;
 
     /**
      * Defines the fallback case if no other cases match.
@@ -286,7 +353,7 @@ export interface IMatcherBranch<
      */
     otherwise<Case extends string>(
         resultCase: Case,
-    ): IMatcherBranch<Context, Cases | Case>;
+    ): IMatcherBranch<Prettify<Context>, Cases | Case, ParentContext>;
 }
 
 /**
@@ -308,9 +375,10 @@ export type TMatcherBranchDelegate<
     Cases extends string,
     BranchCases extends string = Cases,
     BranchContext extends object = Context,
+    ParentContext extends object = Context,
 > = (
     branch: IMatcherBranch<Context, Cases>,
-) => IMatcherBranch<BranchContext, BranchCases>;
+) => IMatcherBranch<BranchContext, BranchCases, ParentContext> | BranchContext;
 
 /**
  * The main interface for the pattern matcher.
@@ -319,10 +387,14 @@ export type TMatcherBranchDelegate<
  * @template Context - The type of the input context being matched.
  * @template Cases - The resulting type after matching cases.
  */
+// @ts-expect-error
+// TS gets confused about Context and ParentContext being the same type here.
+// It’s safe to ignore — we know they're equal in this matcher implementation
 export interface IMatcher<
     Context extends object,
     Cases extends string = undefined,
-> extends IMatcherBranch<Context, Cases> {
+    OriginContext extends object = Context,
+> extends IMatcherBranch<Context, Cases, OriginContext> {
     /**
      * Resolves and returns the matched case key.
      * Returns `undefined` if no case matched and no fallback is defined.
@@ -355,11 +427,11 @@ export interface IMatcher<
 
     withContext<ContextExt extends object | null>(
         ext: ContextExt,
-    ): IMatcher<TContextMerge<Context, ContextExt>, Cases>;
+    ): IMatcher<Prettify<TContextMerge<Context, ContextExt>>, Cases, OriginContext>;
 
     mapContext<ContextMapped extends object>(
         mapper: TMatcherContextMapper<Context, ContextMapped>,
-    ): IMatcher<ContextMapped, Cases>;
+    ): IMatcher<Prettify<ContextMapped>, Cases>;
 
     forward<ForwardCases extends string, BranchContext extends object>(
         delegate: TMatcherBranchDelegate<
@@ -368,35 +440,35 @@ export interface IMatcher<
             ForwardCases,
             BranchContext
         >,
-    ): IMatcher<BranchContext, Cases | ForwardCases>;
+    ): IMatcher<Prettify<BranchContext>, Cases | ForwardCases, OriginContext>;
 
     matchCase<Case extends string>(
         condition: boolean,
         resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
-    ): IMatcher<Context, Cases | Case>;
+    ): IMatcher<Prettify<Context>, Cases | Case, OriginContext>;
 
     matchCase<Case extends string>(
         pattern: TMatcherContextPattern<Context>,
         resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
-    ): IMatcher<Context, Cases | Case>;
+    ): IMatcher<Prettify<Context>, Cases | Case, OriginContext>;
 
     matchCase<Case extends string>(
         predicate: TMatcherPredicate<Context>,
         resultCase: Case | TMatcherBranchDelegate<Context, Cases, Case>,
-    ): IMatcher<Context, Cases | Case>;
+    ): IMatcher<Prettify<Context>, Cases | Case, OriginContext>;
 
     selectCase<Case extends string>(
         selector: TMatcherSelector<Context, Case>,
-    ): IMatcher<Context, Cases | Case>;
+    ): IMatcher<Prettify<Context>, Cases | Case, OriginContext>;
 
     selectCase<Case extends string, T extends string & {}>(
         selector: TMatcherSelector<Context, T>,
         caseMap: Record<T, Case | TMatcherBranchDelegate<Context, Cases, Case>>,
-    ): IMatcher<Context, Cases | Case>;
+    ): IMatcher<Prettify<Context>, Cases | Case, OriginContext>;
 
     otherwise<Case extends string>(
         resultCase: Case,
-    ): IMatcher<Context, Cases | Case>;
+    ): IMatcher<Prettify<Context>, Cases | Case, OriginContext>;
 
     // endregion: Override IMatcherBranch
 }

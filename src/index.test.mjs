@@ -504,6 +504,141 @@ describe("Matcher", () => {
                 expect(result).toBe(expectedResult);
             });
         });
+
+        describe("Unwrap context", () => {
+            describe("Root", () => {
+                test("WHEN: Unwrap new matcher without context", () => {
+                    // Arrange ---------
+                    var m = matcher();
+
+                    // Act -------------
+                    var result = m.unwrap();
+
+                    // Assert ----------
+                    // Returns empty object by default
+                    expect(Object.keys(result)).toHaveLength(0);
+                });
+
+                test("WHEN: Unwrap new matcher with context", () => {
+                    // Arrange ----------
+                    var ctx = { foo: "bar" };
+                    var m = matcher(ctx);
+
+                    // Act --------------
+                    var result = m.unwrap();
+
+                    // Assert -----------
+                    // Returns origin context object
+                    expect(result).toBe(ctx);
+                });
+
+                test("WHEN: Unwrap matcher after extend context", () => {
+                    // Arrange ---------
+                    var ctxOrigin = { foo: 11 };
+                    var ctxExt = { bar: 22 };
+                    var m = matcher(ctxOrigin).withContext(ctxExt);
+
+                    // Act -------------
+                    var result = m.unwrap();
+
+                    // Assert ----------
+                    expect(result).not.toBe(ctxOrigin);
+                    expect(result).not.toBe(ctxExt);
+                    expect(result).toEqual(Object.assign(ctxOrigin, ctxExt));
+                });
+
+                test("WHEN: Unwrap matcher after transform context", () => {
+                    // Arrange ---------
+                    var ctxOrigin = { foo: 42 };
+                    var m = matcher(ctxOrigin).mapContext((c) => ({
+                        bar: c.foo,
+                    }));
+
+                    // Act -------------
+                    var result = m.unwrap();
+
+                    // Assert ----------
+                    expect(result).not.toBe(ctxOrigin);
+                    expect(result).toEqual({ bar: 42 });
+                });
+
+                test("WHEN: Unwrap context with merge delegate", () => {
+                    // Arrange -------
+                    var ctxOrigin = { foo: 42 };
+                    var ctxExt = { bar: 11, qwe: "asd" };
+                    var expected = Object.assign(
+                        { origin: ctxOrigin },
+                        ctxOrigin,
+                        ctxExt,
+                    );
+                    var delegate = vi.fn((c, origin) => ({ ...c, origin }));
+                    var m = matcher(ctxOrigin).withContext(ctxExt);
+
+                    // Act -----------
+                    var result = m.unwrap(delegate);
+
+                    // Assert --------
+                    // 1. Delegate was called by unwrap
+                    expect(delegate).toHaveBeenCalledWith(
+                        Object.assign(ctxExt, ctxOrigin),
+                        ctxOrigin,
+                    );
+                    expect(delegate).toHaveReturnedWith(expected);
+                    // 2. Unwrap operation returns result of delegate
+                    expect(result).toEqual(expected);
+                });
+            });
+
+            describe("Branch", () => {
+                test("WHEN: Unwrap branch context to root", () => {
+                    // Arrange ---------
+                    var ctxOrigin = { foo: 11 };
+                    var ctxExt = { bar: 22 };
+                    var m = matcher(ctxOrigin).forward((b) =>
+                        b.withContext(ctxExt).unwrap(),
+                    );
+
+                    // Act -------------
+                    var result = m.unwrap();
+
+                    // Assert ----------
+                    expect(result).toEqual({ foo: 11, bar: 22 });
+                });
+
+                test("WHEN: Unwrap branch context with merge delegate", () => {
+                    // Arrange ------
+                    var ctxOrigin = { foo: 42 };
+                    var ctxExt = { foo: 11, bar: 22 };
+                    var delegate = vi.fn((c, o) => Object.assign({ d: 1 }, o, c));
+                    var m = matcher(ctxOrigin).forward((b) =>
+                        b.withContext(ctxExt).unwrap(delegate),
+                    );
+
+                    // Act ----------
+                    var result = m.unwrap();
+
+                    // Assert -------
+                    expect(delegate).toHaveBeenCalledWith(ctxExt, ctxOrigin);
+                    expect(delegate).toHaveReturnedWith(result);
+                    expect(result).toEqual({ foo: 11, bar: 22, d: 1 });
+                });
+
+                test("WHEN: Do not unwrap branch context", () => {
+                    // Arrange ---------
+                    var ctxOrigin = { foo: 11 };
+                    var ctxExt = { bar: 22 };
+                    var m = matcher(ctxOrigin).forward((b) =>
+                        b.withContext(ctxExt),
+                    );
+
+                    // Act -------------
+                    var result = m.unwrap();
+
+                    // Assert ----------
+                    expect(result).toEqual(ctxOrigin);
+                });
+            });
+        });
     });
 
     describe("Comparators", () => {
