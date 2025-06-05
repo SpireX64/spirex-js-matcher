@@ -25,11 +25,35 @@ export type TMatcherSelector<Context extends object, T> = (
     context: Readonly<Context>,
 ) => T;
 
+/**
+ * A callback function that reports the current state of the matcher.
+ *
+ * Can be called at any time to inspect the current context and matched case.
+ * Useful for diagnostics, logging, or integration with developer tools.
+ *
+ * @template Context - The shape of the matcher context.
+ * @template Case - The matched case key.
+ * @param context - The current read-only context.
+ * @param matchedCase - The key of the case currently matched.
+ */
 export type TMatcherPicker<Context extends object, Case extends string & {}> = (
     context: Readonly<Context>,
     matchedCase: Case,
 ) => void;
 
+
+/**
+ * A function that resolves a result value based on the matched case.
+ *
+ * Similar to a switch-case or match expression that returns a result.
+ *
+ * @template Result - The type of the returned value.
+ * @template Context - The shape of the matcher context.
+ * @template Case - The matched case key.
+ * @param context - The current read-only context after matching.
+ * @param caseKey - The key of the case that was matched.
+ * @returns A result of type `Result` corresponding to the matched case.
+ */
 export type TMatcherResolver<
     Result,
     Context extends object,
@@ -102,6 +126,7 @@ export type TContextMerge<
  *
  * @template Context The current context shape.
  * @template Cases A union of all case keys used so far.
+ * @template ParentContext The parent context shape.
  */
 export interface IMatcherBranch<
     Context extends object,
@@ -229,6 +254,17 @@ export interface IMatcherBranch<
         >,
     ): ResultContext;
 
+    /**
+     * Executes a side-effect function with the current matcher state.
+     *
+     * The provided `picker` is called immediately with the current context and matched case.
+     * This is useful for observing matcher state at any point in the chain.
+     *
+     * It does not wait for resolution and does not affect matcher behavior or flow.
+     *
+     * @param picker - A function that receives the current context and matched case at the moment of call.
+     * @returns The current matcher instance for chaining.
+     */
     pick(picker: TMatcherPicker<Context, Cases>): this
 
     /**
@@ -420,11 +456,17 @@ export interface IMatcher<
     resolve<Result>(resultMap: Record<Cases, Result>): Result;
 
     /**
-     * Resolves and maps the matched case to a result using the provided map.
-     * If the case is not present in the map, returns the fallback value.
+     * Resolves the matcher by executing or returning a result for the matched case.
      *
-     * @param resultMap An object with optional mappings for some case keys.
-     * @param fallback The fallback result if the matched case is not in the map.
+     * Allows defining results either directly or via resolver functions
+     * that receive the current context and case key.
+     *
+     * A `fallback` is required to handle unmatched cases.
+     *
+     * @template Result - The type of value returned by the resolution.
+     * @param resultMap - A partial map of case keys to result values or resolver functions.
+     * @param fallback - A default result or resolver to be used when no match is found.
+     * @returns The resolved result.
      */
     resolve<Result>(
         resultMap: Partial<
