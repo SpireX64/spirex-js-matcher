@@ -10,7 +10,7 @@ type Prettify<T extends object> = {
 
 /** A predicate function used to match the given context. */
 export type TMatcherPredicate<Context extends object> = (
-    context: Context,
+    context: Readonly<Context>,
 ) => boolean;
 
 /**
@@ -22,14 +22,14 @@ export type TMatcherPredicate<Context extends object> = (
  * @returns The selected value.
  */
 export type TMatcherSelector<Context extends object, T> = (
-    context: Context,
+    context: Readonly<Context>,
 ) => T;
 
 export type TMatcherResolver<
     Result,
     Context extends object,
     Case extends string,
-> = (context: Context, caseKey: Case) => Result;
+> = (context: Readonly<Context>, caseKey: Case) => Result;
 
 /**
  * Interface for a value comparator used in matcher patterns.
@@ -64,7 +64,7 @@ export type TMatcherContextPattern<Context extends object> = {
 export type TMatcherContextMapper<
     Context extends object,
     ContextMapped extends object,
-> = (context: Context) => ContextMapped;
+> = (context: Readonly<Context>) => ContextMapped;
 
 /**
  * A delegate function to merge the origin context with the result context of a matcher branch.
@@ -81,7 +81,7 @@ export type TMatcherContextMergeDelegate<
     CurrentContext extends object,
     ParentContext extends object,
     ResultContext extends object,
-> = (context: CurrentContext, parentContext: ParentContext) => ResultContext;
+> = (context: Readonly<CurrentContext>, parentContext: Readonly<ParentContext>) => ResultContext;
 
 /** Utility type for merging two context objects */
 export type TContextMerge<
@@ -220,6 +220,8 @@ export interface IMatcherBranch<
             ResultContext
         >,
     ): ResultContext;
+
+    pick()
 
     /**
      * Adds a match case to the matcher using boolean condition.
