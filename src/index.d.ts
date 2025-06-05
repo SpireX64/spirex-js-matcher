@@ -20,6 +20,12 @@ export type TMatcherSelector<Context extends object, T> = (
     context: Context,
 ) => T;
 
+export type TMatcherResolver<
+    Result,
+    Context extends object,
+    Case extends string,
+> = (context: Context, caseKey: Case) => Result;
+
 /**
  * Interface for a value comparator used in matcher patterns.
  * Can be used to define advanced comparison logic for context fields.
@@ -339,8 +345,10 @@ export interface IMatcher<
      * @param fallback The fallback result if the matched case is not in the map.
      */
     resolve<Result>(
-        resultMap: Partial<Record<Cases, Result>>,
-        fallback: Result,
+        resultMap: Partial<
+            Record<Cases, Result | TMatcherResolver<Result, Context, Cases>>
+        >,
+        fallback: Result | TMatcherResolver<Result, Context, Cases>,
     ): Result;
 
     // region: Override IMatcherBranch

@@ -141,31 +141,33 @@ describe("Matcher", () => {
 
         describe("forwarding", () => {
             test("WHEN: Forward matching flow", () => {
-            // Arrange -----------
-            var m = matcher({ value: 42 })
-                .forward((branch) => branch.matchCase({ value: 42 }, trueCase))
-                .otherwise(falseCase);
+                // Arrange -----------
+                var m = matcher({ value: 42 })
+                    .forward((branch) =>
+                        branch.matchCase({ value: 42 }, trueCase),
+                    )
+                    .otherwise(falseCase);
 
-            // Act ---------------
-            var result = m.resolve();
+                // Act ---------------
+                var result = m.resolve();
 
-            // Assert ------------
-            expect(result).toBe(trueCase);
-            })
+                // Assert ------------
+                expect(result).toBe(trueCase);
+            });
 
             test("WHEN: Case matched", () => {
                 // Arrange -----
                 var m = matcher({ value: 42 })
-                    .matchCase({ value: 42 }, 'case1')
-                    .forward(branch => branch.otherwise('case2'))
-                    .otherwise('case3')
+                    .matchCase({ value: 42 }, "case1")
+                    .forward((branch) => branch.otherwise("case2"))
+                    .otherwise("case3");
 
                 // Act --------
                 var result = m.resolve();
 
                 // Assert ----
-                expect(result).toBe('case1');
-            })
+                expect(result).toBe("case1");
+            });
         });
     });
 
@@ -223,7 +225,7 @@ describe("Matcher", () => {
         test("WHEN: mutate context with mapper", () => {
             // Arrange -----
             var m = matcher({ value: 42 })
-                .mapContext(ctx =>  ({ value: ctx.value * 100 }))
+                .mapContext((ctx) => ({ value: ctx.value * 100 }))
                 .matchCase({ value: matcher.number({ min: 1000 }) }, trueCase)
                 .otherwise(falseCase);
 
@@ -232,7 +234,7 @@ describe("Matcher", () => {
 
             // Assert ------
             expect(result).toBe(trueCase);
-        })
+        });
     });
 
     describe("Resolve", () => {
@@ -455,6 +457,24 @@ describe("Matcher", () => {
                 expect(result).toBe(2);
             });
 
+            test("WHEN: map case delegate", () => {
+                // Arrange ------
+                var ctx = { foo: "bar" };
+                var m = matcher(ctx);
+                var expectedResult = 42;
+                var caseResolver = vi.fn(() => expectedResult);
+
+                // Act ----------
+                var result = m
+                    .selectCase(() => "A")
+                    .otherwise("B")
+                    .resolve({ A: caseResolver, B: falseCase });
+
+                // Assert -------
+                expect(caseResolver).toHaveBeenCalledWith(ctx, "A");
+                expect(result).toBe(expectedResult);
+            });
+
             test("WHEN: map case with fallback result", () => {
                 // Arrange --------
                 var m = matcher({ foo: falseCase })
@@ -467,6 +487,21 @@ describe("Matcher", () => {
 
                 // Arrange ---------
                 expect(result).toBe(0);
+            });
+
+            test("WHEN: map case with fallback delegate", () => {
+                // Arrange ------
+                var ctx = { foo: "bar" };
+                var m = matcher(ctx);
+                var expectedResult = 42;
+                var caseResolver = vi.fn(() => expectedResult);
+
+                // Act ----------
+                var result = m.otherwise("A").resolve({}, caseResolver);
+
+                // Assert -------
+                expect(caseResolver).toHaveBeenCalledWith(ctx, "A");
+                expect(result).toBe(expectedResult);
             });
         });
     });

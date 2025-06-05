@@ -96,7 +96,11 @@ export function matcher(context) {
         },
 
         resolve(resultMap, fallback) {
-            return resultMap ? resultMap[matchedCase] || fallback : matchedCase;
+            if (!resultMap) return matchedCase;
+            var resultOrDelegate = resultMap[matchedCase] || fallback;
+            return typeof resultOrDelegate === "function"
+                ? resultOrDelegate(currentContext, matchedCase)
+                : resultOrDelegate;
         },
     };
 }
