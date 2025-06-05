@@ -1,27 +1,10 @@
 {
-  "name": "@spirex/matcher",
-  "description": "Simple pattern matcher",
-  "version": "0.0.1",
-  "license": "MIT",
-  "private": false,
-  "author": "Artem Sobolenkov",
-  "main": "./build/index.cjs",
-  "module": "./build/index.mjs",
-  "types": "./build/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./build/index.d.ts",
-      "require": "./build/index.cjs",
-      "import": "./build/index.mjs",
-      "default": "./build/index.js"
-    }
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SpireX64/spirex-js-matcher.git"
   },
-  "scripts": {
-    "test": "vitest run --config ./vitest.config.mjs",
-    "test:c": "vitest run --config ./vitest.config.mjs --coverage",
-    "build": "rollup --config --environment NODE_ENV:development",
-    "build:release": "rollup --config --environment NODE_ENV:production"
-  },
+  "private": true,
+  "workspaces": ["./packages/*"],
   "devDependencies": {
     "rollup": "4.41.1",
     "rollup-plugin-copy": "3.5.0",

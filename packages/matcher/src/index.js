@@ -44,7 +44,7 @@ export function matcher(context) {
                 var valuePattern = pattern[key];
                 return checkIsComparator(valuePattern)
                     ? valuePattern.test(currentContext[key])
-                    : Object.is(currentContext[key], valuePattern);
+                    : (currentContext[key] === valuePattern);
             });
             // Context must match given pattern
             if (!isMatchPattern) return;
@@ -54,7 +54,7 @@ export function matcher(context) {
 
     return {
         withContext(ext) {
-            if (ext) updateContext(Object.assign({}, getContext(), ext));
+            if (ext) updateContext({ ...getContext(), ...ext });
             return this;
         },
 
@@ -71,7 +71,7 @@ export function matcher(context) {
         },
 
         pick(picker) {
-            return picker(getContext(), matchedCase), this
+            return picker(getContext(), matchedCase), this;
         },
 
         unwrap(delegate) {
